@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bayesian Inference in Phylogenetics, and the &quot;Stable&quot; Model of Trait Evolution</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Bayesian Inference in Phylogenetics, and the &quot;Stable&quot; Model of Trait Evolution">
+  <meta name="author" content="Juan M Vazquez">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Bayesian Inference in Phylogenetics, and the &quot;Stable&quot; Model of Trait Evolution</h1>
+    <h2></h2>
+    <p>Juan M Vazquez<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Outline of Talk</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Bayesian Inference and Phylogenetics</li>
+<li>Model Selection Criteria: DIC, PBIC, PSRF</li>
+<li>Brownian Motion vs the &quot;Stable&quot;&quot; Model</li>
+<li>Hands-On Work with SimpleTraits</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Before we begin:</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r"># Set seed for reproducibility
+set.seed(123)
+# Tidyverse, for dataframe data wrangling
+library(tidyverse)
+# StableDist, for the Stable Distribution
+library(stabledist)
+# ggtree, to visualize the tree (also conveniently imports everything else we may need to manipulate the trees)
+library(ggtree)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Bayesian Inference and Phylogenetics</h2>
+  </hgroup>
+  <article data-timings="">
+    
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Frequentists vs Bayesians</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Paradigm of Frequentist Statistics:  </p>
+
+<ul>
+<li>Results of a single experiment draw from the same infinite pool of probable results of equivalent experiments<br></li>
+<li>Analysis of results, criteria for significance, must be concurrent with experimental design to avoid bias<br></li>
+</ul>
+
+<p>The alternate view of Bayesian Statistics:  </p>
+
+<ul>
+<li>Each experiment draws inherently from our a priori knowledge<br></li>
+<li>One can/must incorportate these a priori data into the a posteriori analysis (caveat: Objective vs Subjective Bayesians)<br></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Why Bayes?</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Maximum Likelihood via nonparametric bootstrapping is computationally taxing for large trees<br></li>
+<li>Bayesian methods don&#39;t necessarily rely on fixed parameters, and can treat model parameters as random variables<br></li>
+<li>Using MCMC with Bayes not only speeds up search through parameter space, but also makes calculations easier<br></li>
+<li>Intuitive interpretation of posterior probabilities as conditional on data</li>
+<li>Sometimes ML is simply intracible, and Bayesian methods are needed to solve numerically</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Intro to Bayes&#39;s Law</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Recall that given our parameters $\theta$, and our data $D$, the probability of our parameters given the data is given by:  </p>
+
+<p>$$ P(\theta|D) = \frac{P(\theta)P(D|\theta)}{P(D)} $$</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Intro to Bayes&#39;s Law: Priors</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Recall that given our parameters $\theta$, and our data $D$, the probability of our parameters given the data is given by:<br>
+$$ P(\theta|D) = \frac{\boldsymbol{P(\theta)}P(D|\theta)}{P(D)} $$  </p>
+
+<p>$\boldsymbol{P(\theta)}$ is known our <em>prior</em>, and represents our <em>a priori</em> notions of what the probability of our parameters are.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>How to pick your prior</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Your prior will be a distribution selected based on your prior notions of the reality of the situation</p>
+
+<p>Done right, the nitty-gritty details of your prior actually shouldn&#39;t matter too much!</p>
+
+<p>How so?</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>How to pick your prior</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Consider this form of Bayes Law:</p>
+
+<p>$$ P(\theta|D) \propto P(\theta)P(D|\theta) $$</p>
+
+<p>As you can see, your prior and your likelihood for a given posterior will be inversely proportional.  </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>How to pick your prior</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Consider this form of Bayes Law:</p>
+
+<p>$$ P(\theta|D) \propto P(\theta)\boldsymbol{P(D|\theta)} $$</p>
+
+<p>As you can see, your prior and your likelihood for a given posterior will be inversely proportional.</p>
+
+<ul>
+<li>More data -&gt; more sensitive likelihoods -&gt; posterior will be more robust to changes in prior<br></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>How to pick your prior</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Consider this form of Bayes Law:</p>
+
+<p>$$ P(\theta|D) \propto \boldsymbol{P(\theta)}P(D|\theta) $$</p>
+
+<p>As you can see, your prior and your likelihood for a given posterior will be inversely proportional.</p>
+
+<ul>
+<li>More data -&gt; more sensitive likelihoods -&gt; posterior will be more robust to changes in prior<br></li>
+<li>Less data -&gt; smaller magnitude likelihoods - &gt; posterior can swing wildly depending on prior!<br></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>How to pick your prior</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>You should rarely if ever be using a uniform prior ($P(\theta_A)=P(\theta_B)=P(\theta_C)$) - leads to gross over/under estimations in datasets (that said, as we&#39;ll see, they have their place in the world)  </p>
+
+<p>3 ways to properly select a prior:</p>
+
+<ul>
+<li>Statistical approach: Assume a distribution of priors based on the nature of the data;<br></li>
+<li>Empirical approach: Use data from other sources to develop informed priors based on your research;<br></li>
+<li>Shotgun approach: Use a wide variety of priors, and select the ones with the highest Posterior Probability.<br></li>
+</ul>
+
+<p>Realistically-speaking, one should always use a combination of all approaches to test the robustness of all results.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Intro to Bayes&#39;s Law: Likelihoods</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Recall that given our parameters $\theta$, and our data $D$, the probability of our parameters given the data is given by:  </p>
+
+<p>$$ P(\theta|D) = \frac{P(\theta)\boldsymbol{P(D|\theta)}}{P(D)} $$</p>
+
+<p>$\boldsymbol{P(D|\theta)}$ is the likelihood of our data based on our chosen models and parameters  </p>
+
+<p>Calculating the likelihood is where the &quot;bulk&quot; of the computational workload takes place, comparing your data to the data expected by the model and testing for fit</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Intro to Bayes&#39;s Law: Normalization</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Recall that given our parameters $\theta$, and our data $D$, the probability of our parameters given the data is given by:  </p>
+
+<p>$$ P(\theta|D) = \frac{P(\theta)P(D|\theta)}{\boldsymbol{P(D)}} $$</p>
+
+<p>$\boldsymbol{P(D)}$ is the probability of the data, which is a normalization factor.  </p>
+
+<p>Calculated as the sum of $P(\theta)P(D|\theta)$ for all $\theta$ tested.</p>
+
+<p>In practice, integration of curves during MCMC exploration negates need for calculating $P(D)$</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Bayes in a Phylogenetic Context: Trees and Additional Parameters</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>You can also add in a tree if you&#39;re unsure about the tree:
+$$ P(\theta| D,T,\theta_T) = \frac{P(\theta)P(D,T,\theta_T|\theta)}{P(D,T,\theta_T)} $$</p>
+
+<p>We can therefore also calculate the Posterior Probability of our parameters $\theta$ in the context of uncertainty in the tree</p>
+
+<p>Hierarchical Bayes: If you&#39;re not sure about the parameters in whatever you&#39;re adding, just add more Bayes!™ *</p>
+
+<p>*Note that this will increase the dimentionality of your problem!</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Bayes in a Phylogenetic Context: Models</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Including models, the general formula becomes:
+$$ P(\theta_M ,M|D,T, \theta_T ) = \frac{P(\theta_M ,M)P(D,T, \theta_T |\theta_M ,M)}{P(D,T, \theta_T )} $$</p>
+
+<p>The model - being one of the questions, not the framework - has its posterior probabilties calculated along with its parameters</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Information Criterias and Your Favorite Model</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>As we discussed in class, Akaike&#39;s Information Criterion (AIC) is a useful metric for comparing how different models reflect reality
+$$AIC = -2log(\mathcal{L}) + 2K$$
+Where $log(\mathcal{L})$ is the log likelihood of your model, and $K$ is the number of free parameters in your model</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Information Criterias and Your Favorite Model</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>As we discussed in class, Akaike&#39;s Information Criterion (AIC) is a useful metric for comparing how different models reflect reality
+$$AIC = -2log(\mathcal{L}) + 2K$$
+Where $log(\mathcal{L})$ is the log likelihood of your model, and $K$ is the number of free parameters in your model</p>
+
+<p>Also as mentioned, there are many flavors of ICs - of note, there&#39;s the Schwartz Bayesian Information Criterion (SBIC):
+$$BIC =  -2log(\mathcal{L}) + 2log(n)K; n&gt;&gt;k $$
+Where $n$ is the sample size of your data.</p>
+
+<p>Note how the effect of the penalty in BIC is now proportional to the size of your data as well. </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Deviance Information Criterion</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Deviance ($D$): Measure of goodness-of-fit at each step of the Markov Chain  </p>
+
+<p>$$ D = -2log(\mathcal{L})+2log(P(Data)) $$  </p>
+
+<p>Recall that in the case of MCMC, just as we can integrate over the resulting probability to deal with $P(Data)$, in the MCMC context this term also disappears and becomes a more familiar:</p>
+
+<p>$$ D = -2log(\mathcal{L}) $$  </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Deviance Information Criterion</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Since unlike ML, we have no stable parameters, we need another way of estimating $K$.  </p>
+
+<p>Let&#39;s define $p_d$ as an estimate of the number of parameters in the parameter space of $\theta$ being considered.</p>
+
+<p>Since our MCMC is effectively tracing a line over a probability distribution, we can use that to our advantage:</p>
+
+<ul>
+<li>$\overline{D(\theta)}$ is the average deviance at a given step of the current Markov Chain<br></li>
+<li>$D(\hat{\theta})$ is the average deviance at a given step of the current Markov Chain<br></li>
+<li>Define $p_d=\overline{D(\theta)}-D(\hat{\theta})$ to get an esimate of the number of parameters!</li>
+</ul>
+
+<p>From the distribuiton generated via MCMC, we can trivially find out $p_d$, which is reported in the output of all Bayesian MCMC software packages</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>DIC, continued</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>DIC is defined as:</p>
+
+<p>$$ DIC = \overline{D(\theta)} + p_d $$</p>
+
+<p>And the Bayesian Predictive Information Criterion (BPIC, PBIC in the output files): 
+$$ BPIC = \overline{D(\theta)} +2p_d $$</p>
+
+<p>Note that this is just giving extra weight to the parameters because tree size is not a factor here, although it should play a role in this calculation. </p>
+
+<p>Like with AIC, the value of DIC is not as important as $\Delta$DIC between two models</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Brownian Motion, the Stable Model, and MCMC</h2>
+  </hgroup>
+  <article data-timings="">
+    
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Going from Normal to Stable in One Conceptual Step</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Take a trait of interest, with a constant mean of zero and a variance of $\sigma$^2.  </p>
+
+<p>By the Central Limit Theorem, we know that given a branch $b$ of length $t_b$, changes will continously accumulate along that branch as a normal distribution </p>
+
+<p>Turns out the Normal distribution is but a special case of a class of distributions called Stable Distributions, which were first studied by Paul Levy in 1925.  </p>
+
+<p>Two parameters of note: $\alpha$ and $c$:  </p>
+
+<ul>
+<li>$\alpha$ represents the &quot;stablility&quot; of the distribution, which simply means the density<br></li>
+<li>$c$, which is actually gamma, is the scale of the distribution<br></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Increasing stability parameter increases probability density at the mean</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r"># Plot the stable distribution for constant gamma (c) and variable alpha
+x &lt;- seq(-4, 4, length=100)
+a &lt;- seq(0.5, 2, by = 0.5)
+labels &lt;- paste(&quot;a=&quot;, c(a, 0.5), sep = &#39;&#39;)
+plot.new()
+hx &lt;- lapply(a, function(a){dstable(x,alpha = a, beta = 0, gamma = 1, delta=0)})
+colors &lt;- c(&quot;red&quot;, &quot;blue&quot;, &quot;darkgreen&quot;, &quot;black&quot;)
+for (s in seq_along(hx)) {
+  lines(x, hx[[s]], type=&quot;l&quot;, col=colors[s], lty=2, xlab=&quot;&quot;,ylab=&quot;Density&quot;, main=&quot;&quot;)
+    }
+legend(&quot;topright&quot;, inset=.05, title=&quot;Distributions&quot;,
+  labels, lwd=2, lty=c(1, 1, 1, 1, 2), col=colors)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <article data-timings="">
+    <p><img src="assets/fig/unnamed-chunk-2-1.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" style="display: block; margin: auto;" /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Increasing scaling parameter flattens the probability distribution</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r"># Plot the stable distribution for constant alpha and variable gamma
+x &lt;- seq(-4, 4, length=100)
+c &lt;- seq(1, 2, by = 0.5)
+labels &lt;- paste(&quot;c=&quot;, c(c, 0.5), sep = &#39;&#39;)
+hx &lt;- lapply(c, function(c){dstable(x,alpha = 2, beta = 0, gamma = c, delta=0)})
+colors &lt;- c(&quot;red&quot;, &quot;blue&quot;, &quot;darkgreen&quot;, &quot;black&quot;)
+plot(x, dstable(x, alpha = 2, beta = 0, gamma = 0.5, delta=0), type=&quot;l&quot;, col=colors[4], lty=2, xlab=&quot;X&quot;, ylab=&quot;Density&quot;, main=&quot;Increasing scaling parameter flattens the probability distribution&quot;)
+for (s in seq_along(hx)) {
+  lines(x, hx[[s]], type=&quot;l&quot;, col=colors[s], lty=2)
+    }
+legend(&quot;topright&quot;, inset=.05, title=&quot;Distributions&quot;,
+  labels, lwd=2, lty=c(1, 1, 1, 1, 2), col=colors)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <article data-timings="">
+    <p><img src="assets/fig/unnamed-chunk-4-1.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" style="display: block; margin: auto;" /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Revisiting a past class assignment...</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r"># first, let&#39;s simulate 100 datasets of 100 steps each:
+y = sapply(1:50, function(x) c(0, rnorm(999, mean = 0, sd = 0.2))) # result is a matrix of random-normal vectors, 
+                                                # centered on 0, with a sd of 0.2 
+layout(matrix(1:2, 1)) # layout two plotting frames
+plot(1:20, cumsum(y[1:20, 1]), &#39;l&#39;, ylim = range(c(cumsum(y[1:100, 1]), cumsum(y[1:100, 2]))), main = &quot;tree of 20 steps&quot;)
+lines(1:20, cumsum(y[1:20, 2]))
+plot(1:100, cumsum(y[1:100, 1]), &#39;l&#39;, ylim = range(c(cumsum(y[1:100, 1]), cumsum(y[1:100, 2]))), main = &quot;tree of 100 steps&quot;)
+lines(1:100, cumsum(y[1:100, 2]))
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>... Let&#39;s now compare those walks with a Stable Random Walk</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r"># first, let&#39;s simulate 100 datasets of 100 steps each:
+sm = lapply(seq(1,2, by=0.5), function(a){
+  m &lt;- replicate(50, c(0, rstable(999, alpha = a, beta = 0, delta = 0, gamma = 1))) # result is a matrix of
+                                                                                      # random-stable vectors
+  n &lt;- cumsum(m[1:100,1]) # return a vector of the 
+  return(n)
+})
+
+range_sm &lt;- range(c(sm))
+for (i in seq_along(sm)){
+  if (i==1){
+    plot(1:100, sm[[i]], &#39;l&#39;, ylim = range_sm, main = &quot;100 Steps of Random Stable Walk&quot;, col=colors[i])
+  } else{
+    lines(1:100, sm[[i]], col=colors[i])
+  }
+}
+legend(&quot;bottomleft&quot;, title=&quot;Alpha&quot;, as.character(seq(1,2,by=0.5)), lwd=2, lty=c(1, 1, 1, 1, 2), col=colors)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <article data-timings="">
+    <p><img src="assets/fig/unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" style="display: block; margin: auto;" /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Why the Stable Model Matters</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Brownian Motion with a Normal distribution assumes a constant, finite variance throughout the tree, but there&#39;s nothing dictating that that actually be the case in biology!</p>
+
+<p>Its plausible that a trait could undergo a massive shift in a given branch, then continue on a normal random walk from there.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>A little about StableTraits before we get started</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Perhaps you noticed that the stable model has two new parameters to be estimated? </p>
+
+<p>For $P(\alpha)$, the program will use a uniform prior by default, since they demonstrated via simulations that $\alpha$ does not greatly affect the ancestral state reconstructions. </p>
+
+<p>For $P(c)$, the program will use an inverted gamma distribution, which is the conjugate distribution of the stable distribution.<br>
+This has the advantage that, even though technically we&#39;ve now introduced new priors for the Gamma, there is a well-established analytical solution to the optimal values of these priors!</p>
+
+<p>Using the --brownianflags, however, you can default $P(\alpha)$ and $P(c)$ to use values that result in the stable model collapsing into the Brownian model; --brownianstrict further constrains the evolution rate to be resolved via Maximum Likelihood. </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Hands-on Time</h2>
+  </hgroup>
+  <article data-timings="">
+    
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Starting Data</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Originally, the paper used the evolution of Eutherian body size as a compelling argument in favor of the Stable Model; however, it only used extant data for its analysis.  </p>
+
+<p>A paper by Mark Puttick and Gavin Thomas in 2015 (which begins with the wonderful observation &quot;Most of life is extinct&quot;) compiled accurate datasets of body mass of both extant and extinct Afrotherians, which leads us to our current investigation: how do the ancestral rate reconstructions compare when we when incorporate extinct species into the tree?</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>The Data</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>In the &quot;data&quot; folder you&#39;ll see 4 files. The ones ending in &quot;.tree&quot; are time-calibrated Newick trees; the &quot;.data&quot; files are a tab-delimited species-body mass table.  </p>
+
+<p>The &quot;Eutheria&quot; files are those from the original analysis; the pair of &quot;Eutheria_Afrotheria_Fossils&quot; files have had the tree from the Puttick and Thomas 2015 paper spliced into the Eutherian phylogeny.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>The Output</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>As you&#39;ll see, there are 4 subfolders in the &quot;output&quot; folder, each with the results of a different run:  </p>
+
+<ul>
+<li>eutheria_brownian:<br>
+stabletraits --tree Eutheria.tree --data Eutheria.data --output ../output/eutheria_brownian/eutheria -c 4 --brownianstable 2&gt;&amp;1 &gt; ../output/eutheria_brownian/log<br></li>
+<li>eutheria_stable:<br>
+stabletraits --tree Eutheria.tree --data Eutheria.data --output ../output/eutheria_stable/eutheria -c 4 2&gt;&amp;1 &gt; ../output/eutheria_stable/log<br></li>
+<li>eutheria_fossil_brownian:<br>
+stabletraits --tree Eutheria_Afrotheria_Fossils.tree --data Eutheria_Afrotheria_Fossils.body --output ../output/eutheria_fossil_brownian/eutheria_afro_fossils -c 4 --brownianstrict 2&gt;&amp;1 &gt; ../output/eutheria_fossil_brownian/log<br></li>
+<li>eutheria_fossil_stable:<br>
+stabletraits --tree Eutheria_Afrotheria_Fossils.tree --data Eutheria_Afrotheria_Fossils.body --output ../output/eutheria_fossil_stable/eutheria_afro_fossils -c 4 2&gt;&amp;1 &gt; ../output/eutheria_fossil_stable/log<br></li>
+</ul>
+
+<p>Additionally, I ran &quot;stabletraitssum --path /path/to/file/filenameroot&quot; in each folder, with --brownian as a flag in the appropriate folders. </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Interactive Time!</h2>
+  </hgroup>
+  <article data-timings="">
+    
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Tasks for you to do:</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Load the data into R<br></li>
+<li>Compare the PBICs of each model within Eutheria and Eutheria+Fossils; does the Brownian Motion or Stable Model fit the data better?<br></li>
+<li>Visualize, using ggtree, the 4 size-change-calibrated trees, and zoom in on Afrotheria to compare and contrast them<br></li>
+<li>Using the original time-calibrated tree, map the size changes along each branch to the tree<br></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <article data-timings="">
+    <p>Some more things to play around with:  </p>
+
+<ul>
+<li>If you haven&#39;t already, play around more with ggtree and PhyloPic: use them along with either the time-calibrated or size-evolution-calibrated trees to visualize your favorite clade! (<a href="https://bioconductor.org/packages/release/bioc/vignettes/ggtree/inst/doc/advanceTreeAnnotation.html#tree-annotation-with-phylopic">https://bioconductor.org/packages/release/bioc/vignettes/ggtree/inst/doc/advanceTreeAnnotation.html#tree-annotation-with-phylopic</a>) </li>
+<li>Try using stabletraits with your continuous trait (note: for time&#39;s sake, change the default number of iterations!)</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Outline of Talk'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Before we begin:'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Bayesian Inference and Phylogenetics'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Frequentists vs Bayesians'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='Why Bayes?'>
+         5
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=6 title='Intro to Bayes&#39;s Law'>
+         6
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=7 title='Intro to Bayes&#39;s Law: Priors'>
+         7
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=8 title='How to pick your prior'>
+         8
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=9 title='How to pick your prior'>
+         9
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=10 title='How to pick your prior'>
+         10
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=11 title='How to pick your prior'>
+         11
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=12 title='How to pick your prior'>
+         12
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=13 title='Intro to Bayes&#39;s Law: Likelihoods'>
+         13
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=14 title='Intro to Bayes&#39;s Law: Normalization'>
+         14
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=15 title='Bayes in a Phylogenetic Context: Trees and Additional Parameters'>
+         15
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=16 title='Bayes in a Phylogenetic Context: Models'>
+         16
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=17 title='Information Criterias and Your Favorite Model'>
+         17
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=18 title='Information Criterias and Your Favorite Model'>
+         18
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=19 title='Deviance Information Criterion'>
+         19
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=20 title='Deviance Information Criterion'>
+         20
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=21 title='DIC, continued'>
+         21
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=22 title='Brownian Motion, the Stable Model, and MCMC'>
+         22
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=23 title='Going from Normal to Stable in One Conceptual Step'>
+         23
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=24 title='Increasing stability parameter increases probability density at the mean'>
+         24
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=25 title='NA'>
+         25
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=26 title='Increasing scaling parameter flattens the probability distribution'>
+         26
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=27 title='NA'>
+         27
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=28 title='Revisiting a past class assignment...'>
+         28
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=29 title='... Let&#39;s now compare those walks with a Stable Random Walk'>
+         29
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=30 title='NA'>
+         30
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=31 title='Why the Stable Model Matters'>
+         31
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=32 title='A little about StableTraits before we get started'>
+         32
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=33 title='Hands-on Time'>
+         33
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=34 title='Starting Data'>
+         34
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=35 title='The Data'>
+         35
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=36 title='The Output'>
+         36
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=37 title='Interactive Time!'>
+         37
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=38 title='Tasks for you to do:'>
+         38
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=39 title='NA'>
+         39
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- MathJax: Fall back to local if CDN offline but local image fonts are not supported (saves >100MB) -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        processEscapes: true
+      }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <!-- <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script> -->
+  <script>window.MathJax || document.write('<script type="text/x-mathjax-config">MathJax.Hub.Config({"HTML-CSS":{imageFont:null}});<\/script><script src="libraries/widgets/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')
+</script>
+<!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
